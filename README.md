@@ -1,7 +1,7 @@
 
 # QuickSwitch Mode
 
-QuickSwitch Mode is a Python script that enhances keyboard responsiveness for gaming. It allows for near-instant directional changes without needing to lift the initial key pressed, providing a significant advantage in competitive gaming scenarios.
+QuickSwitch Mode is a Python script that enhances keyboard responsiveness for gaming. It allows for near-instant directional changes. providing a significant advantage in competitive gaming scenarios.
 
 ## Features
 
