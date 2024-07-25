@@ -1,7 +1,6 @@
-
 # QuickSwitch Mode
 
-QuickSwitch Mode is a Python script that enhances keyboard responsiveness for gaming. It allows for near-instant directional changes. providing a significant advantage in competitive gaming scenarios.
+QuickSwitch Mode is a Python script that enhances keyboard responsiveness for gaming. It allows for near-instant directional changes without needing to lift the initial key pressed, providing a significant advantage in competitive gaming scenarios. Specifically, it prevents both 'a' and 'd' keys from being pressed simultaneously.
 
 ## Features
 
@@ -14,14 +13,15 @@ QuickSwitch Mode is a Python script that enhances keyboard responsiveness for ga
 - Python 3.x
 - `pynput` library
 - `tkinter` library (included with Python's standard library)
+- `keyboard` library
 
 ## Installation
 
 1. Install Python 3.x from [python.org](https://www.python.org/).
-2. Install the `pynput` library:
+2. Install the required libraries:
 
 ```sh
-pip install pynput
+pip install pynput keyboard
 ```
 
 ## Usage
@@ -37,7 +37,7 @@ python quickswitch.py
 
 ### Keyboard Listener
 
-The script uses `pynput` to listen for key presses and releases. It toggles QuickSwitch mode when both `Ctrl` and `Shift` are pressed simultaneously.
+The script uses `pynput` and `keyboard` to listen for key presses and releases. It toggles QuickSwitch mode when both `Ctrl` and `Shift` are pressed simultaneously.
 
 ### GUI with `tkinter`
 
@@ -47,70 +47,53 @@ The GUI provides a simple interface with:
 
 ### Customization
 
-- **Custom Keys**: Change the `key1` and `key2` variables to use different keys for QuickSwitch.
+- **Custom Keys**: Change the `key_a` and `key_d` variables to use different keys for QuickSwitch.
 - **Toggle Keys**: The script currently uses `Ctrl` and `Shift` to toggle QuickSwitch mode. Modify the `toggle_keys` set if you want to use different keys.
 
 ## Code
 
 ```python
 import tkinter as tk
-from pynput import keyboard
-
-# Define the keys for QuickSwitch Mode
-key1 = keyboard.KeyCode.from_char('a')
-key2 = keyboard.KeyCode.from_char('d')
+import keyboard
 
 # Track the state of the keys and mode
-key1_pressed = False
-key2_pressed = False
-quick_switch_enabled = False
+quickswitch_enabled = False
+key_a_pressed = False
+key_d_pressed = False
 
-# Modifier keys to toggle QuickSwitch Mode
-toggle_keys = {keyboard.Key.ctrl, keyboard.Key.shift}
-current_keys = set()
+def on_key_event(e):
+    global key_a_pressed, key_d_pressed, quickswitch_enabled
 
-def on_press(key):
-    global key1_pressed, key2_pressed, quick_switch_enabled
-
-    if key in toggle_keys:
-        current_keys.add(key)
-        if current_keys == toggle_keys:
-            quick_switch_enabled = not quick_switch_enabled
-            update_status()
-
-    if quick_switch_enabled:
-        if key == key1:
-            key1_pressed = True
-            key2_pressed = False
-            print("Key1 pressed")
-        elif key == key2:
-            key2_pressed = True
-            key1_pressed = False
-            print("Key2 pressed")
-
-def on_release(key):
-    global key1_pressed, key2_pressed
-
-    if key in toggle_keys:
-        current_keys.discard(key)
-
-    if quick_switch_enabled:
-        if key == key1:
-            key1_pressed = False
-        elif key == key2:
-            key2_pressed = False
+    if quickswitch_enabled:
+        if e.name == 'a':
+            if e.event_type == 'down':
+                key_a_pressed = True
+                if key_d_pressed:
+                    keyboard.block_key('d')
+            elif e.event_type == 'up':
+                key_a_pressed = False
+                keyboard.unblock_key('d')
+        
+        if e.name == 'd':
+            if e.event_type == 'down':
+                key_d_pressed = True
+                if key_a_pressed:
+                    keyboard.block_key('a')
+            elif e.event_type == 'up':
+                key_d_pressed = False
+                keyboard.unblock_key('a')
 
 def update_status():
-    status_label.config(text=f"QuickSwitch Mode {'Enabled' if quick_switch_enabled else 'Disabled'}")
+    status_label.config(text=f"QuickSwitch Mode {'Enabled' if quickswitch_enabled else 'Disabled'}")
 
-def enable_quick_switch():
-    global quick_switch_enabled
-    quick_switch_enabled = True
+def enable_quickswitch():
+    global quickswitch_enabled
+    quickswitch_enabled = True
     update_status()
 
-def disable_quick_switch():
-    global quick_switch_enabled
-    quick_switch_enabled = False
+def disable_quickswitch():
+    global quickswitch_enabled
+    quickswitch_enabled = False
     update_status()
 
 # Create the GUI
@@ -120,21 +103,20 @@ root.title("QuickSwitch Mode")
 status_label = tk.Label(root, text="QuickSwitch Mode Disabled", font=("Times New Roman", 14))
 status_label.pack(pady=20)
 
-enable_button = tk.Button(root, text="Enable QuickSwitch", command=enable_quick_switch, font=("Times New Roman", 12))
+enable_button = tk.Button(root, text="Enable QuickSwitch", command=enable_quickswitch, font=("Times New Roman", 12))
 enable_button.pack(pady=10)
 
-disable_button = tk.Button(root, text="Disable QuickSwitch", command=disable_quick_switch, font=("Times New Roman", 12))
+disable_button = tk.Button(root, text="Disable QuickSwitch", command=disable_quickswitch, font=("Times New Roman", 12))
 disable_button.pack(pady=10)
 
-# Start the keyboard listener in a separate thread
-listener = keyboard.Listener(on_press=on_press, on_release=on_release)
-listener.start()
+# Hook the keyboard events
+keyboard.hook(on_key_event)
 
 # Run the GUI event loop
 root.mainloop()
 
-# Stop the keyboard listener when the GUI is closed
-listener.stop()
+# Unhook all keyboard events when the GUI is closed
+keyboard.unhook_all()
 ```
 
 ## License
@@ -143,4 +125,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Acknowledgments
 
-- Inspired by Razer's Snap Tap feature for gaming keyboards.
+- Inspired by the concept of "Nullbind" behavior for gaming keyboards.
