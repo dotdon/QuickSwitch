@@ -1,5 +1,6 @@
 import tkinter as tk
 import keyboard
+import os
 
 # Track the state of the keys and mode
 quickswitch_enabled = False
@@ -41,6 +42,11 @@ def disable_quickswitch():
     quickswitch_enabled = False
     update_status()
 
+def check_root():
+    if os.name != 'nt' and os.geteuid() != 0:
+        root.destroy()
+        raise PermissionError("This script must be run as root on Linux.")
+
 # Create the GUI
 root = tk.Tk()
 root.title("QuickSwitch Mode")
@@ -54,6 +60,9 @@ enable_button.pack(pady=10)
 disable_button = tk.Button(root, text="Disable QuickSwitch", command=disable_quickswitch, font=("Times New Roman", 12))
 disable_button.pack(pady=10)
 
+# Check for root privileges on Linux
+check_root()
+
 # Hook the keyboard events
 keyboard.hook(on_key_event)
 
@@ -62,4 +71,3 @@ root.mainloop()
 
 # Unhook all keyboard events when the GUI is closed
 keyboard.unhook_all()
-
